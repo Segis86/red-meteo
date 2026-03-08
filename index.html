@@ -1,65 +1,88 @@
-const express = require('express');
-const app = express();
-const PORT = process.env.PORT || 3000;
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Red Meteo</title>
 
-// Para poder recibir JSON desde Ecowitt
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
 
-// Inicializamos la lista de estaciones
-let estaciones = [];
+<style>
+#map {
+  height: 100vh;
+}
+.temp-marker div {
+  padding: 4px;
+  border-radius: 4px;
+  color: white;
+  font-weight: bold;
+  text-align: center;
+  width: 40px;
+}
+</style>
 
-// Endpoint que Ecowitt usará para enviar datos
-app.post('/update', (req, res) => {
-    const body = req.body;
+</head>
 
-    // body puede tener diferentes nombres según tu configuración Ecowitt
-    // Ejemplo esperado:
-    // {
-    //   "station_id": "IVILLA1255",
-    //   "nombre": "Villar del Arzobispo - Iglesia",
-    //   "lat": 39.73,
-    //   "lon": -0.82,
-    //   "temp": 15,
-    //   "hum": 65,
-    //   "wind_speed": 10,
-    //   "wind_dir": 135
-    // }
+<body>
 
-    if(!body.station_id) return res.status(400).send("Falta station_id");
+<div id="map"></div>
 
-    // Buscar si ya existe la estación
-    let index = estaciones.findIndex(e => e.station_id === body.station_id);
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
-    const estData = {
-        station_id: body.station_id,
-        nombre: body.nombre || "Estación "+body.station_id,
-        lat: parseFloat(body.lat) || 0,
-        lon: parseFloat(body.lon) || 0,
-        link: `https://www.wunderground.com/dashboard/pws/${body.station_id}`,
-        temp: parseFloat(body.temp) || 0,
-        hum: parseFloat(body.hum) || 0,
-        wind_speed: parseFloat(body.wind_speed) || 0,
-        wind_dir: parseFloat(body.wind_dir) || 0
-    };
+<script>
 
-    if(index >= 0){
-        // Actualizar estación existente
-        estaciones[index] = estData;
-    } else {
-        // Añadir nueva estación
-        estaciones.push(estData);
-    }
+// Crear mapa centrado en tu zona
+var map = L.map('map').setView([39.73, -0.82], 9);
 
-    res.send({status: "ok", estaciones});
+// Capa de mapa
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+ attribution: '© OpenStreetMap'
+}).addTo(map);
+
+// Lista de estaciones con temperatura simulada
+var estaciones = [
+  {
+    nombre: "Villar del Arzobispo - Iglesia",
+    lat: 39.73,
+    lon: -0.82,
+    link: "https://www.wunderground.com/dashboard/pws/IVILLA1255",
+    temp: 15
+  },
+  {
+    nombre: "Benaguasil",
+    lat: 39.59,
+    lon: -0.58,
+    link: "https://www.wunderground.com/dashboard/pws/IBENAG2",
+    temp: 17
+  }
+];
+
+// Crear marcadores con temperatura y color según temperatura
+estaciones.forEach(function(est) {
+
+  var temp = est.temp;
+
+  // Elegir color según temperatura
+  var color;
+  if(temp < 10) color = 'blue';
+  else if(temp < 20) color = 'orange';
+  else color = 'red';
+
+  // Icono personalizado con temperatura
+  var tempIcon = L.divIcon({
+    className: 'temp-marker',
+    html: '<div style="background-color:'+color+';">'+ temp +'°C</div>'
+  });
+
+  var marker = L.marker([est.lat, est.lon], {icon: tempIcon}).addTo(map);
+
+  marker.bindPopup(
+    "<b>" + est.nombre + "</b><br>" +
+    "<a href='" + est.link + "' target='_blank'>Ver datos en directo</a>"
+  );
+
 });
 
-// Endpoint público para tu web
-app.get('/estaciones.json', (req, res) => {
-    res.json(estaciones);
-});
+</script>
 
-// Servir puerto
-app.listen(PORT, () => {
-    console.log(`Servidor activo en puerto ${PORT}`);
-});
+</body>
+</html>
