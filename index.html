@@ -2,105 +2,90 @@
 <html>
 <head>
 <meta charset="utf-8">
-<title>Red Meteo</title>
+<title>Red Meteo Avanzada Viento</title>
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
-
 <style>
-#map {
-  height: 100vh;
-}
+#map { height: 100vh; }
 .temp-marker div {
   padding: 4px;
   border-radius: 4px;
   color: white;
   font-weight: bold;
   text-align: center;
-  width: 40px;
+  min-width: 40px;
+  position: relative;
+}
+.wind-arrow {
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform-origin: center;
+  font-size: 12px;
 }
 </style>
-
 </head>
-
 <body>
 
 <div id="map"></div>
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-
 <script>
 
-// Crear mapa centrado en tu zona
+// Crear mapa
 var map = L.map('map').setView([39.73, -0.82], 9);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(map);
 
-// Capa de mapa
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
- attribution: '© OpenStreetMap'
-}).addTo(map);
+var estaciones = [];
 
-// Lista de estaciones con temperatura inicial (simulada)
-var estaciones = [
-  {
-    nombre: "Villar del Arzobispo - Iglesia",
-    lat: 39.73,
-    lon: -0.82,
-    link: "https://www.wunderground.com/dashboard/pws/IVILLA1255",
-    temp: 15
-  },
-  {
-    nombre: "Benaguasil",
-    lat: 39.59,
-    lon: -0.58,
-    link: "https://www.wunderground.com/dashboard/pws/IBENAG2",
-    temp: 17
-  }
-];
+// Gradiente de temperatura (0°C azul → 35°C rojo)
+function colorTemp(temp){
+  var r = Math.min(255, Math.max(0, Math.floor((temp/35)*255)));
+  var b = 255 - r;
+  return 'rgb('+r+',0,'+b+')';
+}
 
-// Función para dibujar marcadores
-function dibujarMarcadores() {
-  // Limpiar marcadores antiguos
+// Dibujar marcadores con flechas de viento
+function dibujarMarcadores(){
   map.eachLayer(function(layer){
     if(layer instanceof L.Marker) map.removeLayer(layer);
   });
 
-  estaciones.forEach(function(est) {
-    var temp = est.temp;
+  estaciones.forEach(function(est){
+    var tempColor = colorTemp(est.temp);
 
-    // Color según temperatura
-    var color;
-    if(temp < 10) color = 'blue';
-    else if(temp < 20) color = 'orange';
-    else color = 'red';
+    // Crear icono con temperatura y flecha de viento
+    var html = '<div style="background-color:'+tempColor+';">'+est.temp+'°C'+
+               '<div class="wind-arrow" style="transform: rotate('+est.wind_dir+'deg);">⬆</div></div>';
 
-    var tempIcon = L.divIcon({
-      className: 'temp-marker',
-      html: '<div style="background-color:'+color+';">'+ temp +'°C</div>'
-    });
-
+    var tempIcon = L.divIcon({ className: 'temp-marker', html: html });
     var marker = L.marker([est.lat, est.lon], {icon: tempIcon}).addTo(map);
 
-    marker.bindPopup(
-      "<b>" + est.nombre + "</b><br>" +
-      "<a href='" + est.link + "' target='_blank'>Ver datos en directo</a>"
-    );
+    var popupContent = "<b>"+est.nombre+"</b><br>"+
+                       "Temp: "+est.temp+"°C<br>"+
+                       "Humedad: "+est.hum+"%<br>"+
+                       "Viento: "+est.wind_speed+" km/h<br>"+
+                       "<a href='"+est.link+"' target='_blank'>Ver datos en WU</a>";
+    marker.bindPopup(popupContent);
   });
 }
 
-// Función para actualizar temperaturas (simulación)
-function actualizarTemperaturas() {
-  estaciones.forEach(function(est) {
-    // Simulamos temperatura aleatoria entre 10 y 24°C
-    est.temp = Math.floor(Math.random() * 15) + 10;
-  });
-
-  dibujarMarcadores();
+// Actualizar datos desde JSON real
+function actualizarDesdeJSON(){
+  fetch('https://TU_SERVIDOR/estaciones.json') // Reemplaza con tu URL real
+    .then(r => r.json())
+    .then(data => {
+      estaciones = data;
+      dibujarMarcadores();
+    })
+    .catch(err => console.error("Error cargando JSON:", err));
 }
 
-// Primera vez
-actualizarTemperaturas();
+// Primera carga
+actualizarDesdeJSON();
 
-// Actualizar cada 10 minutos
-setInterval(actualizarTemperaturas, 10*60*1000);
+// Actualizar cada 5 min
+setInterval(actualizarDesdeJSON, 5*60*1000);
 
 </script>
 
