@@ -39,22 +39,36 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 }).addTo(map);
 
 // Lista de estaciones con temperatura simulada
-var estaciones = [
-  {
-    nombre: "Villar del Arzobispo - Iglesia",
-    lat: 39.73,
-    lon: -0.82,
-    link: "https://www.wunderground.com/dashboard/pws/IVILLA1255",
-    temp: 10
-  },
-  {
-    nombre: "Benaguasil",
-    lat: 39.59,
-    lon: -0.58,
-    link: "https://www.wunderground.com/dashboard/pws/IBENAG2",
-    temp: 13
-  }
-];
+fetch("https://red-meteo.onrender.com/estaciones.json")
+.then(function(response){
+  return response.json();
+})
+.then(function(estaciones){
+
+  estaciones.forEach(function(est){
+
+    var temp = est.temp;
+
+    var color;
+    if(temp < 10) color = 'blue';
+    else if(temp < 20) color = 'orange';
+    else color = 'red';
+
+    var tempIcon = L.divIcon({
+      className: 'temp-marker',
+      html: '<div style="background-color:'+color+';">'+ temp +'°C</div>'
+    });
+
+    var marker = L.marker([est.lat, est.lon], {icon: tempIcon}).addTo(map);
+
+    marker.bindPopup(
+      "<b>" + est.nombre + "</b><br>" +
+      "<a href='" + est.link + "' target='_blank'>Ver datos en directo</a>"
+    );
+
+  });
+
+});
 
 // Crear marcadores con temperatura y color según temperatura
 estaciones.forEach(function(est) {
