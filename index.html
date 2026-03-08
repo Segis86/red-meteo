@@ -8,7 +8,15 @@
 
 <style>
 #map {
-height: 100vh;
+  height: 100vh;
+}
+.temp-marker div {
+  padding: 4px;
+  border-radius: 4px;
+  color: white;
+  font-weight: bold;
+  text-align: center;
+  width: 40px;
 }
 </style>
 
@@ -22,7 +30,7 @@ height: 100vh;
 
 <script>
 
-// Crear mapa
+// Crear mapa centrado en tu zona
 var map = L.map('map').setView([39.73, -0.82], 9);
 
 // Capa de mapa
@@ -30,31 +38,47 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
  attribution: '© OpenStreetMap'
 }).addTo(map);
 
-// Lista de estaciones
+// Lista de estaciones con temperatura simulada
 var estaciones = [
-{
-nombre: "Villar del Arzobispo - Iglesia",
-lat: 39.73,
-lon: -0.82,
-link: "https://www.wunderground.com/dashboard/pws/IVILLA1255"
-},
-{
-nombre: "Benaguasil",
-lat: 39.59,
-lon: -0.58,
-link: "https://www.wunderground.com/dashboard/pws/IBENAG2"
-}
+  {
+    nombre: "Villar del Arzobispo - Iglesia",
+    lat: 39.73,
+    lon: -0.82,
+    link: "https://www.wunderground.com/dashboard/pws/IVILLA1255",
+    temp: 15
+  },
+  {
+    nombre: "Benaguasil",
+    lat: 39.59,
+    lon: -0.58,
+    link: "https://www.wunderground.com/dashboard/pws/IBENAG2",
+    temp: 17
+  }
 ];
 
-// Crear marcadores
+// Crear marcadores con temperatura y color según temperatura
 estaciones.forEach(function(est) {
 
-var marker = L.marker([est.lat, est.lon]).addTo(map);
+  var temp = est.temp;
 
-marker.bindPopup(
-"<b>" + est.nombre + "</b><br>" +
-"<a href='" + est.link + "' target='_blank'>Ver datos en directo</a>"
-);
+  // Elegir color según temperatura
+  var color;
+  if(temp < 10) color = 'blue';
+  else if(temp < 20) color = 'orange';
+  else color = 'red';
+
+  // Icono personalizado con temperatura
+  var tempIcon = L.divIcon({
+    className: 'temp-marker',
+    html: '<div style="background-color:'+color+';">'+ temp +'°C</div>'
+  });
+
+  var marker = L.marker([est.lat, est.lon], {icon: tempIcon}).addTo(map);
+
+  marker.bindPopup(
+    "<b>" + est.nombre + "</b><br>" +
+    "<a href='" + est.link + "' target='_blank'>Ver datos en directo</a>"
+  );
 
 });
 
