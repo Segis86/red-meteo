@@ -29,6 +29,7 @@
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
 <script>
+
 // Crear mapa centrado en tu zona
 var map = L.map('map').setView([39.73, -0.82], 9);
 
@@ -37,58 +38,49 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
  attribution: '© OpenStreetMap'
 }).addTo(map);
 
-var estaciones = []; // Se llenará desde tu servidor
+// Lista de estaciones con temperatura simulada
+var estaciones = [
+  {
+    nombre: "Villar del Arzobispo - Iglesia",
+    lat: 39.73,
+    lon: -0.82,
+    link: "https://www.wunderground.com/dashboard/pws/IVILLA1255",
+    temp: 10
+  },
+  {
+    nombre: "Benaguasil",
+    lat: 39.59,
+    lon: -0.58,
+    link: "https://www.wunderground.com/dashboard/pws/IBENAG2",
+    temp: 13
+  }
+];
 
-// Función para dibujar marcadores
-function dibujarMarcadores() {
-  // Limpiar marcadores antiguos
-  map.eachLayer(function(layer){
-    if(layer instanceof L.Marker) map.removeLayer(layer);
+// Crear marcadores con temperatura y color según temperatura
+estaciones.forEach(function(est) {
+
+  var temp = est.temp;
+
+  // Elegir color según temperatura
+  var color;
+  if(temp < 10) color = 'blue';
+  else if(temp < 20) color = 'orange';
+  else color = 'red';
+
+  // Icono personalizado con temperatura
+  var tempIcon = L.divIcon({
+    className: 'temp-marker',
+    html: '<div style="background-color:'+color+';">'+ temp +'°C</div>'
   });
 
-  estaciones.forEach(function(est) {
-    var temp = est.temp;
-    var color = temp < 10 ? 'blue' : temp < 20 ? 'orange' : 'red';
+  var marker = L.marker([est.lat, est.lon], {icon: tempIcon}).addTo(map);
 
-    var tempIcon = L.divIcon({
-      className: 'temp-marker',
-      html: '<div style="background-color:'+color+';">'+ temp +'°C</div>'
-    });
+  marker.bindPopup(
+    "<b>" + est.nombre + "</b><br>" +
+    "<a href='" + est.link + "' target='_blank'>Ver datos en directo</a>"
+  );
 
-    var marker = L.marker([est.lat, est.lon], {icon: tempIcon}).addTo(map);
-
-    // Enlace seguro que abre nueva pestaña
-    marker.bindPopup(
-      "<b>" + est.nombre + "</b><br>" +
-      "<a href='" + est.link + "' target='_blank' rel='noopener noreferrer'>Ver datos en directo</a>"
-    );
-  });
-}
-
-// Función para actualizar desde tu JSON real en Render
-function actualizarDesdeServidor() {
-  fetch('https://TU_SERVIDOR/estaciones.json') // reemplaza con tu URL de Render
-    .then(response => response.json())
-    .then(data => {
-      estaciones = data;
-      dibujarMarcadores();
-    })
-    .catch(err => {
-      console.error("No se pudo cargar JSON, usando datos de prueba:", err);
-      // Datos de prueba para que el mapa siga funcionando
-      estaciones = [
-        {nombre:"Villar del Arzobispo - Iglesia", lat:39.73, lon:-0.82, link:"#", temp:10},
-        {nombre:"Benaguasil", lat:39.59, lon:-0.58, link:"#", temp:13}
-      ];
-      dibujarMarcadores();
-    });
-}
-
-// Primera carga
-actualizarDesdeServidor();
-
-// Refrescar cada 5 minutos
-setInterval(actualizarDesdeServidor, 300000);
+});
 
 </script>
 
