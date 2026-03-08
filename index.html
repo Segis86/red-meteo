@@ -22,18 +22,25 @@ height: 100vh;
 
 <script>
 
-var map = L.map('map').setView([39.73, -0.82], 8);
+var estaciones = [
+{
+nombre: "Villar del Arzobispo - Iglesia",
+lat: 39.73,
+lon: -0.82,
+link: "https://www.wunderground.com/dashboard/pws/IVILLA1255"
+}
+];
 
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
- attribution: '© OpenStreetMap'
-}).addTo(map);
+estaciones.forEach(function(est) {
 
-var marker = L.marker([39.73039598729157, -0.8261959606953505]).addTo(map);
+var marker = L.marker([est.lat, est.lon]).addTo(map);
 
 marker.bindPopup(
-"<b>Villar del Arzobispo - Iglesia</b><br>" +
-"<a href='https://www.wunderground.com/dashboard/pws/IVILLA1255' target='_blank'>Ver datos en directo</a>"
+"<b>" + est.nombre + "</b><br>" +
+"<a href='" + est.link + "' target='_blank'>Ver datos en directo</a>"
 );
+
+});
 
 </script>
 
