@@ -22,6 +22,15 @@ height: 100vh;
 
 <script>
 
+// Crear mapa
+var map = L.map('map').setView([39.73, -0.82], 9);
+
+// Capa de mapa
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+ attribution: '© OpenStreetMap'
+}).addTo(map);
+
+// Lista de estaciones
 var estaciones = [
 {
 nombre: "Villar del Arzobispo - Iglesia",
@@ -31,6 +40,7 @@ link: "https://www.wunderground.com/dashboard/pws/IVILLA1255"
 }
 ];
 
+// Crear marcadores
 estaciones.forEach(function(est) {
 
 var marker = L.marker([est.lat, est.lon]).addTo(map);
