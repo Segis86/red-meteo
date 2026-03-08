@@ -40,36 +40,35 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 
 // Lista de estaciones con temperatura simulada
 fetch("https://red-meteo.onrender.com/estaciones.json")
-.then(function(response){
-  return response.json();
-})
-.then(function(estaciones){
+  .then(response => response.json())
+  .then(estaciones => {
 
-  estaciones.forEach(function(est){
+    estaciones.forEach(est => {
+      const temp = est.temp;
 
-    var temp = est.temp;
+      // color según temperatura
+      let color;
+      if(temp < 10) color = 'blue';
+      else if(temp < 20) color = 'orange';
+      else color = 'red';
 
-    var color;
-    if(temp < 10) color = 'blue';
-    else if(temp < 20) color = 'orange';
-    else color = 'red';
+      // icono con temperatura
+      const tempIcon = L.divIcon({
+        className: 'temp-marker',
+        html: `<div style="background-color:${color};">${temp}°C</div>`
+      });
 
-    var tempIcon = L.divIcon({
-      className: 'temp-marker',
-      html: '<div style="background-color:'+color+';">'+ temp +'°C</div>'
+      const marker = L.marker([est.lat, est.lon], {icon: tempIcon}).addTo(map);
+
+      marker.bindPopup(
+        `<b>${est.nombre}</b><br>` +
+        `<a href="${est.link}" target="_blank">Ver datos en directo</a>`
+      );
     });
 
-    var marker = L.marker([est.lat, est.lon], {icon: tempIcon}).addTo(map);
-
-    marker.bindPopup(
-      "<b>" + est.nombre + "</b><br>" +
-      "<a href='" + est.link + "' target='_blank'>Ver datos en directo</a>"
-    );
-
-  });
-
-});
-
+  })
+  .catch(err => console.error("Error cargando estaciones:", err));
+  
 // Crear marcadores con temperatura y color según temperatura
 estaciones.forEach(function(est) {
 
