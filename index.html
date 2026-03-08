@@ -38,7 +38,7 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
  attribution: '© OpenStreetMap'
 }).addTo(map);
 
-// Lista de estaciones con temperatura simulada
+// Lista de estaciones con temperatura inicial (simulada)
 var estaciones = [
   {
     nombre: "Villar del Arzobispo - Iglesia",
@@ -56,31 +56,51 @@ var estaciones = [
   }
 ];
 
-// Crear marcadores con temperatura y color según temperatura
-estaciones.forEach(function(est) {
-
-  var temp = est.temp;
-
-  // Elegir color según temperatura
-  var color;
-  if(temp < 10) color = 'blue';
-  else if(temp < 20) color = 'orange';
-  else color = 'red';
-
-  // Icono personalizado con temperatura
-  var tempIcon = L.divIcon({
-    className: 'temp-marker',
-    html: '<div style="background-color:'+color+';">'+ temp +'°C</div>'
+// Función para dibujar marcadores
+function dibujarMarcadores() {
+  // Limpiar marcadores antiguos
+  map.eachLayer(function(layer){
+    if(layer instanceof L.Marker) map.removeLayer(layer);
   });
 
-  var marker = L.marker([est.lat, est.lon], {icon: tempIcon}).addTo(map);
+  estaciones.forEach(function(est) {
+    var temp = est.temp;
 
-  marker.bindPopup(
-    "<b>" + est.nombre + "</b><br>" +
-    "<a href='" + est.link + "' target='_blank'>Ver datos en directo</a>"
-  );
+    // Color según temperatura
+    var color;
+    if(temp < 10) color = 'blue';
+    else if(temp < 20) color = 'orange';
+    else color = 'red';
 
-});
+    var tempIcon = L.divIcon({
+      className: 'temp-marker',
+      html: '<div style="background-color:'+color+';">'+ temp +'°C</div>'
+    });
+
+    var marker = L.marker([est.lat, est.lon], {icon: tempIcon}).addTo(map);
+
+    marker.bindPopup(
+      "<b>" + est.nombre + "</b><br>" +
+      "<a href='" + est.link + "' target='_blank'>Ver datos en directo</a>"
+    );
+  });
+}
+
+// Función para actualizar temperaturas (simulación)
+function actualizarTemperaturas() {
+  estaciones.forEach(function(est) {
+    // Simulamos temperatura aleatoria entre 10 y 24°C
+    est.temp = Math.floor(Math.random() * 15) + 10;
+  });
+
+  dibujarMarcadores();
+}
+
+// Primera vez
+actualizarTemperaturas();
+
+// Actualizar cada 10 minutos
+setInterval(actualizarTemperaturas, 10*60*1000);
 
 </script>
 
